@@ -160,14 +160,33 @@ h1, h2, h3, h4 {
 
 .modal-content {
   width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
+  max-width: 700px;
+  max-height: calc(100vh - 2rem);
   overflow-y: auto;
-  animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #0a0a0a;
+  border: 1px solid var(--card-border);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 10px;
 }
 
 @keyframes modalIn {
-  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
@@ -203,8 +222,14 @@ h1, h2, h3, h4 {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 600px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Animations */

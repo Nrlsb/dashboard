@@ -49,7 +49,20 @@ export default function PriceDashboard() {
       });
       if (res.ok) {
         setShowModal(false);
-        setNewProduct({ name: '', sku: '', links: {} });
+        setNewProduct({ 
+          name: '', 
+          sku: '', 
+          links: {
+            'tiendauniverso.com.ar': '',
+            'somosrex.com': '',
+            'prestigio.com.ar': '',
+            'pisano.com.ar': '',
+            'pintureriasambito.com': '',
+            'pintecord.com.ar': '',
+            'pintureriagarin.com': '',
+            'pintureriasmercurio.com.ar': ''
+          } 
+        });
         fetchPrices(); // Recargar para ver el nuevo producto
       }
     } catch (error) {
@@ -114,9 +127,17 @@ export default function PriceDashboard() {
       </header>
 
       {showModal && (
-        <div className="modal-overlay">
-          <div className="glass-card modal-content">
-            <h2 style={{ marginBottom: '1.5rem' }}>Añadir Nuevo Producto</h2>
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <h2 style={{ margin: 0 }}>Añadir Nuevo Producto</h2>
+              <button 
+                onClick={() => setShowModal(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
             <form onSubmit={handleAddProduct}>
               <div className="form-group">
                 <label>Nombre del Producto</label>
