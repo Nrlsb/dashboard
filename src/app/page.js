@@ -12,7 +12,11 @@ export default function PriceDashboard() {
     try {
       const res = await fetch('/api/prices');
       const data = await res.json();
-      setProducts(data);
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else {
+        console.error('Data is not an array:', data);
+      }
     } catch (error) {
       console.error('Error fetching prices:', error);
     } finally {
@@ -22,11 +26,12 @@ export default function PriceDashboard() {
   };
 
   useEffect(() => {
-    // Cargar datos iniciales (desde el JSON)
     fetch('/api/prices')
       .then(res => res.json())
       .then(data => {
-        setProducts(data);
+        if (Array.isArray(data)) {
+          setProducts(data);
+        }
         setLoading(false);
       });
   }, []);

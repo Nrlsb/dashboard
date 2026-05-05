@@ -20,9 +20,6 @@ export async function GET() {
             return { ...product, prices: newPrices, lastUpdate: new Date().toISOString() };
         }));
 
-        // Opcional: Guardar de vuelta al JSON para persistencia básica
-        fs.writeFileSync(filePath, JSON.stringify(updatedProducts, null, 2));
-
         return NextResponse.json(updatedProducts);
     } catch (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
