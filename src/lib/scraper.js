@@ -7,11 +7,11 @@ const selectors = {
         fraction: null 
     },
     'somosrex.com': { 
-        main: '.price-container [data-price-type="finalPrice"] .price', 
+        main: '[data-price-type="defaultPromoPrice"] .price, [data-price-type="defaultPromoPrice"].price', 
         fraction: null 
     },
     'prestigio.com.ar': { 
-        main: '[class*="sellingPriceValue"]', 
+        main: 'meta[property="product:price:amount"]', 
         fraction: null 
     },
     'pisano.com.ar': { 
@@ -40,32 +40,56 @@ export async function getPrice(url) {
         if (!config) return null;
 
         const { data } = await axios.get(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' },
-            timeout: 10000
+            headers: { 
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8'
+            },
+            timeout: 15000
         });
 
         const $ = cheerio.load(data);
-        let mainPrice = $(config.main).first().text().trim();
+        let mainPrice = '';
 
-        if (!mainPrice) {
-            const generic = $('[class*="price"]').first().text().trim();
-            if (!generic) return null;
-            return parseFloat(generic.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, ''));
-        }
-
-        let price;
-        if (config.fraction) {
-            let fraction = $(config.fraction).first().text().trim();
-            let priceStr = mainPrice.replace(/[^\d]/g, '');
-            if (fraction) {
-                priceStr += '.' + fraction.replace(/[^\d]/g, '');
-            }
-            price = parseFloat(priceStr);
+        // Intentar con el selector configurado
+        const el = $(config.main).first();
+        
+        // Si el selector es un meta tag, obtener el atributo 'content'
+        if (config.main.includes('meta')) {
+            mainPrice = el.attr('content') || '';
         } else {
-            let cleanedPrice = mainPrice.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
-            price = parseFloat(cleanedPrice);
+            mainPrice = el.text().trim();
         }
 
+        // Si falla el selector específico, intentar con meta tags estándar de SEO (muy comunes en VTEX)
+        if (!mainPrice) {
+            mainPrice = $('meta[property="product:price:amount"]').attr('content') || 
+                        $('meta[property="og:price:amount"]').attr('content') ||
+                        $('.vtex-product-price-1-x-sellingPriceValue').first().text().trim();
+        }
+
+        if (!mainPrice) return null;
+
+        // Limpieza profunda del precio
+        // Si viene de meta tag suele ser "172873.00", si viene de HTML "$ 172.873,00"
+        let cleaned = mainPrice.replace(/\s/g, ''); // Quitar espacios
+        
+        // Manejar formato latino (1.234,56) vs internacional (1,234.56)
+        if (cleaned.includes(',') && cleaned.includes('.')) {
+            if (cleaned.indexOf('.') < cleaned.indexOf(',')) {
+                // Formato latino: 1.234,56
+                cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+            } else {
+                // Formato internacional: 1,234.56
+                cleaned = cleaned.replace(/,/g, '');
+            }
+        } else if (cleaned.includes(',')) {
+            // Solo coma: podría ser decimal o separador de miles. 
+            // En Argentina suele ser decimal.
+            cleaned = cleaned.replace(',', '.');
+        }
+
+        const price = parseFloat(cleaned.replace(/[^\d.]/g, ''));
         return isNaN(price) ? null : price;
     } catch (error) {
         console.error(`Error fetching ${url}:`, error.message);

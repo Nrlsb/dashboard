@@ -153,23 +153,23 @@ h1, h2, h3, h4 {
   backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 1rem;
+  align-items: flex-start; /* Volver a flex-start para mejor scroll */
+  z-index: 9999;
+  padding: 2rem 1rem;
+  overflow-y: auto; /* El overlay maneja el scroll principal */
 }
 
 .modal-content {
   width: 100%;
-  max-width: 700px;
-  max-height: calc(100vh - 2rem);
-  overflow-y: auto;
+  max-width: 800px; /* Un poco más ancho para las 3 columnas */
   background: #0a0a0a;
   border: 1px solid var(--card-border);
   border-radius: 1.5rem;
-  padding: 2rem;
+  padding: 2.5rem;
   position: relative;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: modalIn 0.3s ease-out;
+  margin-bottom: 2rem;
 }
 
 .modal-content::-webkit-scrollbar {
@@ -222,8 +222,14 @@ h1, h2, h3, h4 {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem;
+  grid-template-columns: repeat(3, 1fr); /* 3 columnas para links */
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 600px) {
@@ -234,8 +240,8 @@ h1, h2, h3, h4 {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .animate-fade-in {
