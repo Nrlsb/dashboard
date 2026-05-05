@@ -79,6 +79,9 @@ export default function PriceDashboard() {
               <th>Prestigio</th>
               <th>Pisano</th>
               <th>Ámbito</th>
+              <th>Pintecord</th>
+              <th>Garin</th>
+              <th>Mercurio</th>
               <th>Mejor Precio</th>
             </tr>
           </thead>
@@ -93,7 +96,16 @@ export default function PriceDashboard() {
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SKU: {product.sku}</span>
                     </div>
                   </td>
-                  {['tiendauniverso.com.ar', 'somosrex.com', 'prestigio.com.ar', 'pisano.com.ar', 'pintureriasambito.com'].map(store => {
+                  {[
+                    'tiendauniverso.com.ar', 
+                    'somosrex.com', 
+                    'prestigio.com.ar', 
+                    'pisano.com.ar', 
+                    'pintureriasambito.com',
+                    'pintecord.com.ar',
+                    'pintureriagarin.com',
+                    'pintureriasmercurio.com.ar'
+                  ].map(store => {
                     const price = product.prices[store];
                     const isBest = price === bestPrice && price !== null;
                     return (

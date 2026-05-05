@@ -7,7 +7,7 @@ const selectors = {
         fraction: null 
     },
     'somosrex.com': { 
-        main: '[data-price-type="finalPrice"]', 
+        main: '.price-container [data-price-type="finalPrice"] .price', 
         fraction: null 
     },
     'prestigio.com.ar': { 
