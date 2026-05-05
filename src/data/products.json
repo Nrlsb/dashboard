@@ -1,0 +1,24 @@
+[
+  {
+    "id": 1,
+    "name": "Albalatex Látex Interior Blanco Mate 20L",
+    "sku": "ALBA-20L-BM",
+    "links": {
+      "tiendauniverso.com.ar": "https://www.tiendauniverso.com.ar/albalatex-latex-interior-blanco-mate-20-l/p",
+      "somosrex.com": "https://www.somosrex.com/latex-interior-albalatex-mate-blanco-20-lts-alba.html",
+      "prestigio.com.ar": "https://www.prestigio.com.ar/albalatex-latex-interior-mate-20lt/p",
+      "pisano.com.ar": "https://www.pisano.com.ar/producto/latex-interior-albalatex-mate-blanco-20-l/",
+      "pintureriasambito.com": "https://www.pintureriasambito.com/pintura-para-interior-latex-lavable-mate-albalatex-20-l-10181/p"
+    },
+    "prices": {}
+  },
+  {
+    "id": 2,
+    "name": "Pinceleta Galgo Obra N° 40 V4",
+    "sku": "GALGO-V4-40",
+    "links": {
+      "tiendauniverso.com.ar": "https://www.tiendauniverso.com.ar/pinceleta-obra-v4-n40-eco-galgo/p"
+    },
+    "prices": {}
+  }
+]
