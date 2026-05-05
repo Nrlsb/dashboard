@@ -350,5 +350,21 @@
       "pintureriasmercurio.com.ar": null
     },
     "prices": {}
+  },
+  {
+    "id": 1777995821695,
+    "name": "Albalatex Blanco X 20",
+    "sku": "PROD-1777995821695",
+    "links": {
+      "tiendauniverso.com.ar": "https://www.tiendauniverso.com.ar/albalatex-latex-interior-blanco-mate-20-l/p",
+      "somosrex.com": "https://somosrex.com/latex-interior-albalatex-mate-blanco-20-lts-alba.html",
+      "prestigio.com.ar": "https://www.prestigio.com.ar/albalatex-latex-interior-mate-20lt/p",
+      "pisano.com.ar": "https://pisano.com.ar/producto/latex-interior-albalatex-mate-blanco-20-l/",
+      "pintureriasambito.com": "https://www.pintureriasambito.com/pintura-para-interior-latex-lavable-mate-albalatex-20-l-10181/p",
+      "pintecord.com.ar": "https://pintecord.com.ar/shop/albalatex-latex-lavable-interior-blanco-mate-r-20-l-56867?search=albalatex+&order=name+asc#attr=88932,88936",
+      "pintureriagarin.com": "",
+      "pintureriasmercurio.com.ar": "https://pintureriasmercurio.com.ar/detalles/?id=4219"
+    },
+    "prices": {}
   }
 ]

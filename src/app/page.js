@@ -6,6 +6,21 @@ export default function PriceDashboard() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    sku: '',
+    links: {
+      'tiendauniverso.com.ar': '',
+      'somosrex.com': '',
+      'prestigio.com.ar': '',
+      'pisano.com.ar': '',
+      'pintureriasambito.com': '',
+      'pintecord.com.ar': '',
+      'pintureriagarin.com': '',
+      'pintureriasmercurio.com.ar': ''
+    }
+  });
 
   const fetchPrices = async () => {
     setUpdating(true);
@@ -14,13 +29,32 @@ export default function PriceDashboard() {
       const data = await res.json();
       if (Array.isArray(data)) {
         setProducts(data);
-      } else {
-        console.error('Data is not an array:', data);
       }
     } catch (error) {
       console.error('Error fetching prices:', error);
     } finally {
       setLoading(false);
+      setUpdating(false);
+    }
+  };
+
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
+    setUpdating(true);
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newProduct)
+      });
+      if (res.ok) {
+        setShowModal(false);
+        setNewProduct({ name: '', sku: '', links: {} });
+        fetchPrices(); // Recargar para ver el nuevo producto
+      }
+    } catch (error) {
+      console.error('Error adding product:', error);
+    } finally {
       setUpdating(false);
     }
   };
@@ -59,15 +93,79 @@ export default function PriceDashboard() {
           <h1 className="title-gradient" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Price Intel</h1>
           <p style={{ color: 'var(--text-muted)' }}>Monitoreo en tiempo real de competidores</p>
         </div>
-        <button 
-          className="btn-primary" 
-          onClick={fetchPrices}
-          disabled={updating}
-        >
-          <RefreshCw size={20} className={updating ? 'animate-spin' : ''} />
-          {updating ? 'Actualizando...' : 'Refrescar Precios'}
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            className="btn-primary" 
+            style={{ background: 'var(--accent)' }}
+            onClick={() => setShowModal(true)}
+          >
+            <Package size={20} />
+            Añadir Producto
+          </button>
+          <button 
+            className="btn-primary" 
+            onClick={fetchPrices}
+            disabled={updating}
+          >
+            <RefreshCw size={20} className={updating ? 'animate-spin' : ''} />
+            {updating ? 'Actualizando...' : 'Refrescar Precios'}
+          </button>
+        </div>
       </header>
+
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="glass-card modal-content">
+            <h2 style={{ marginBottom: '1.5rem' }}>Añadir Nuevo Producto</h2>
+            <form onSubmit={handleAddProduct}>
+              <div className="form-group">
+                <label>Nombre del Producto</label>
+                <input 
+                  type="text" 
+                  required 
+                  value={newProduct.name}
+                  onChange={e => setNewProduct({...newProduct, name: e.target.value})}
+                  placeholder="Ej: Pintura Látex Alba 20L"
+                />
+              </div>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>SKU (Opcional)</label>
+                  <input 
+                    type="text" 
+                    value={newProduct.sku}
+                    onChange={e => setNewProduct({...newProduct, sku: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <h3 style={{ margin: '1.5rem 0 1rem', fontSize: '1rem' }}>Links de Tiendas</h3>
+              <div className="form-grid">
+                {Object.keys(newProduct.links).map(store => (
+                  <div className="form-group" key={store}>
+                    <label>{store.split('.')[0].toUpperCase()}</label>
+                    <input 
+                      type="url" 
+                      placeholder="https://..." 
+                      value={newProduct.links[store]}
+                      onChange={e => {
+                        const links = {...newProduct.links};
+                        links[store] = e.target.value;
+                        setNewProduct({...newProduct, links});
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                <button type="submit" className="btn-primary" style={{ flex: 1 }}>Guardar y Scrapear</button>
+                <button type="button" className="btn-primary" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }} onClick={() => setShowModal(false)}>Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <section className="glass-card">
         <table className="price-table">
