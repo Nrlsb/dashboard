@@ -44,8 +44,8 @@ export async function getPrice(url) {
         if (domain === 'pintecord.com.ar' && url.includes('#attr=')) {
             try {
                 const productPath = urlObj.pathname;
-                // Extraer el ID del producto al final del slug (ej: -56867)
-                const match = productPath.match(/-(\d+)$/);
+                // Extraer el ID del producto al final del slug (ej: -56867 o -56867/)
+                const match = productPath.match(/-(\d+)\/?$/);
                 const productId = match ? match[1] : null;
                 
                 // Extraer los IDs de los atributos del hash
@@ -66,7 +66,13 @@ export async function getPrice(url) {
                             parent_combination: []
                         }
                     }, { 
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            'Accept': 'application/json, text/plain, */*',
+                            'Origin': `https://${domain}`,
+                            'Referer': url
+                        },
                         timeout: 10000 
                     });
 
@@ -75,7 +81,7 @@ export async function getPrice(url) {
                     }
                 }
             } catch (e) {
-                console.error("Error fetching Odoo variant price:", e.message);
+                console.error("Error fetching Odoo variant price for Pintecord:", e.message);
             }
         }
 
