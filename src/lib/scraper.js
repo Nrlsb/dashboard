@@ -41,68 +41,101 @@ export async function getPrice(url) {
         if (!config) return null;
 
         // Soporte especial para Pintecord (Odoo) y variantes
-        if (domain === 'pintecord.com.ar' && url.includes('#attr=')) {
+        if (domain === 'pintecord.com.ar') {
             try {
-                const productPath = urlObj.pathname;
-                // Extraer el ID del producto al final del slug (ej: -56867 o -56867/)
-                const match = productPath.match(/-(\d+)\/?$/);
-                const productId = match ? match[1] : null;
-                
-                // Extraer los IDs de los atributos del hash
-                const hash = url.split('#')[1] || '';
-                const attrPart = hash.split('attr=')[1];
-                const attrIds = attrPart ? attrPart.split(',').map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
+                // 1. Primero hacemos un GET para obtener cookies de sesión y headers
+                const sessionRes = await axios.get(url, {
+                    headers: { 
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    },
+                    timeout: 15000
+                });
 
-                if (productId && attrIds.length > 0) {
-                    // Endpoint exacto capturado de la red
-                    const { data: odooData } = await axios.post(`https://${domain}/website_sale/get_combination_info`, {
-                        jsonrpc: "2.0",
-                        method: "call",
-                        params: {
-                            product_template_id: parseInt(productId),
-                            product_id: false, // Odoo acepta false aquí para buscar por combinación
-                            combination: attrIds,
-                            add_qty: 1,
-                            parent_combination: []
-                        }
-                    }, { 
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                            'Accept': 'application/json, text/plain, */*',
-                            'Origin': `https://${domain}`,
-                            'Referer': url
-                        },
-                        timeout: 10000 
-                    });
+                const cookies = sessionRes.headers['set-cookie'];
+                const cookieHeader = cookies ? cookies.map(c => c.split(';')[0]).join('; ') : '';
 
-                    if (odooData?.result?.price) {
-                        // Limpiar el precio por si viene como string formateado (ej: "$ 164.140,65")
-                        const rawPrice = odooData.result.price.toString().replace(/[^\d.,]/g, '');
-                        let cleaned = rawPrice;
-                        
-                        if (cleaned.includes(',') && cleaned.includes('.')) {
-                            if (cleaned.indexOf('.') < cleaned.indexOf(',')) {
-                                cleaned = cleaned.replace(/\./g, '').replace(',', '.');
-                            } else {
-                                cleaned = cleaned.replace(/,/g, '');
+                if (url.includes('#attr=')) {
+                    const productPath = urlObj.pathname;
+                    const match = productPath.match(/-(\d+)\/?$/);
+                    const productId = match ? match[1] : null;
+                    
+                    const hash = url.split('#')[1] || '';
+                    const attrPart = hash.split('attr=')[1];
+                    const attrIds = attrPart ? attrPart.split(',').map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
+
+                    if (productId && attrIds.length > 0) {
+                        const { data: odooData } = await axios.post(`https://${domain}/website_sale/get_combination_info`, {
+                            jsonrpc: "2.0",
+                            method: "call",
+                            params: {
+                                product_template_id: parseInt(productId),
+                                product_id: false,
+                                combination: attrIds,
+                                add_qty: 1,
+                                parent_combination: []
                             }
-                        } else if (cleaned.includes(',')) {
-                            cleaned = cleaned.replace(',', '.');
-                        } else if (cleaned.includes('.')) {
-                            const parts = cleaned.split('.');
-                            if (parts[parts.length - 1].length === 3) {
-                                cleaned = cleaned.replace(/\./g, '');
-                            }
-                        }
+                        }, { 
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                                'Accept': 'application/json, text/plain, */*',
+                                'Origin': `https://${domain}`,
+                                'Referer': url,
+                                'Cookie': cookieHeader,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            timeout: 15000 
+                        });
 
-                        const price = parseFloat(cleaned);
-                        return isNaN(price) ? null : price;
+                        if (odooData?.result?.price) {
+                            const rawPrice = odooData.result.price.toString().replace(/[^\d.,]/g, '');
+                            let cleaned = rawPrice;
+                            
+                            if (cleaned.includes(',') && cleaned.includes('.')) {
+                                if (cleaned.indexOf('.') < cleaned.indexOf(',')) {
+                                    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+                                } else {
+                                    cleaned = cleaned.replace(/,/g, '');
+                                }
+                            } else if (cleaned.includes(',')) {
+                                cleaned = cleaned.replace(',', '.');
+                            } else if (cleaned.includes('.')) {
+                                const parts = cleaned.split('.');
+                                if (parts[parts.length - 1].length === 3) {
+                                    cleaned = cleaned.replace(/\./g, '');
+                                }
+                            }
+
+                            const price = parseFloat(cleaned);
+                            if (!isNaN(price)) return price;
+                        }
                     }
                 }
+
+                // Si no es variante o falló el POST, intentamos extraer del HTML del GET que ya hicimos
+                const $ = cheerio.load(sessionRes.data);
+                const el = $(selectors[domain].main).first();
+                const mainPrice = el.attr('data-price-amount') || el.attr('content') || el.text().trim();
+                
+                if (mainPrice) {
+                    let cleaned = mainPrice.replace(/[^\d.,]/g, '');
+                    if (cleaned.includes(',') && cleaned.includes('.')) {
+                        if (cleaned.indexOf('.') < cleaned.indexOf(',')) cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+                        else cleaned = cleaned.replace(/,/g, '');
+                    } else if (cleaned.includes(',')) cleaned = cleaned.replace(',', '.');
+                    else if (cleaned.includes('.') && cleaned.split('.').pop().length === 3) cleaned = cleaned.replace(/\./g, '');
+                    
+                    const price = parseFloat(cleaned);
+                    if (!isNaN(price)) return price;
+                }
             } catch (e) {
-                console.error("Error fetching Odoo variant price for Pintecord:", e.message);
+                console.error("Error fetching Pintecord:", e.message);
             }
+            // Si llegamos aquí para Pintecord, falló todo lo específico
         }
 
         const { data } = await axios.get(url, {
