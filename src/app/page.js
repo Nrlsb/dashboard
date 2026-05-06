@@ -66,7 +66,7 @@ export default function PriceDashboard() {
 
   const handleDeleteProduct = async (id) => {
     if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) return;
-    
+
     setUpdating(true);
     try {
       const res = await fetch(`/api/products?id=${id}`, {
@@ -95,9 +95,9 @@ export default function PriceDashboard() {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingId(null);
-    setNewProduct({ 
-      name: '', 
-      sku: '', 
+    setNewProduct({
+      name: '',
+      sku: '',
       links: {
         'tiendauniverso.com.ar': '',
         'somosrex.com': '',
@@ -107,7 +107,7 @@ export default function PriceDashboard() {
         'pintecord.com.ar': '',
         'pintureriagarin.com': '',
         'pintureriasmercurio.com.ar': ''
-      } 
+      }
     });
   };
 
@@ -142,12 +142,12 @@ export default function PriceDashboard() {
     <main>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
         <div>
-          <h1 className="title-gradient" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Price Intel</h1>
+          <h1 className="title-gradient" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Precios</h1>
           <p style={{ color: 'var(--text-muted)' }}>Monitoreo en tiempo real de competidores</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <button 
-            className="btn-primary" 
+          <button
+            className="btn-primary"
             style={{ background: 'var(--accent)' }}
             onClick={() => {
               setEditingId(null);
@@ -157,8 +157,8 @@ export default function PriceDashboard() {
             <Package size={20} />
             Añadir Producto
           </button>
-          <button 
-            className="btn-primary" 
+          <button
+            className="btn-primary"
             onClick={fetchPrices}
             disabled={updating}
           >
@@ -173,7 +173,7 @@ export default function PriceDashboard() {
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <h2 style={{ margin: 0 }}>{editingId ? 'Editar Producto' : 'Añadir Nuevo Producto'}</h2>
-              <button 
+              <button
                 onClick={handleCloseModal}
                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
               >
@@ -183,38 +183,38 @@ export default function PriceDashboard() {
             <form onSubmit={handleSaveProduct}>
               <div className="form-group">
                 <label>Nombre del Producto</label>
-                <input 
-                  type="text" 
-                  required 
+                <input
+                  type="text"
+                  required
                   value={newProduct.name}
-                  onChange={e => setNewProduct({...newProduct, name: e.target.value})}
+                  onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
                   placeholder="Ej: Pintura Látex Alba 20L"
                 />
               </div>
               <div className="form-grid">
                 <div className="form-group">
                   <label>SKU (Opcional)</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={newProduct.sku}
-                    onChange={e => setNewProduct({...newProduct, sku: e.target.value})}
+                    onChange={e => setNewProduct({ ...newProduct, sku: e.target.value })}
                   />
                 </div>
               </div>
-              
+
               <h3 style={{ margin: '1.5rem 0 1rem', fontSize: '1rem' }}>Links de Tiendas</h3>
               <div className="form-grid">
                 {Object.keys(newProduct.links).map(store => (
                   <div className="form-group" key={store}>
                     <label>{store.split('.')[0].toUpperCase()}</label>
-                    <input 
-                      type="url" 
-                      placeholder="https://..." 
+                    <input
+                      type="url"
+                      placeholder="https://..."
                       value={newProduct.links[store]}
                       onChange={e => {
-                        const links = {...newProduct.links};
+                        const links = { ...newProduct.links };
                         links[store] = e.target.value;
-                        setNewProduct({...newProduct, links});
+                        setNewProduct({ ...newProduct, links });
                       }}
                     />
                   </div>
@@ -262,10 +262,10 @@ export default function PriceDashboard() {
                       </div>
                     </td>
                     {[
-                      'tiendauniverso.com.ar', 
-                      'somosrex.com', 
-                      'prestigio.com.ar', 
-                      'pisano.com.ar', 
+                      'tiendauniverso.com.ar',
+                      'somosrex.com',
+                      'prestigio.com.ar',
+                      'pisano.com.ar',
                       'pintureriasambito.com',
                       'pintecord.com.ar',
                       'pintureriagarin.com',
@@ -297,14 +297,14 @@ export default function PriceDashboard() {
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button 
+                        <button
                           onClick={() => handleEditClick(product)}
                           style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', padding: '0.5rem' }}
                           title="Editar"
                         >
                           <Edit size={18} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDeleteProduct(product.id)}
                           style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '0.5rem' }}
                           title="Eliminar"
