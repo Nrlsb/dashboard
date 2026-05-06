@@ -44,8 +44,8 @@ export async function getPrice(url) {
         if (domain === 'pintecord.com.ar' && url.includes('#attr=')) {
             try {
                 const productPath = urlObj.pathname;
-                // Intentar extraer el ID del producto del slug (ej: -56867)
-                const match = productPath.match(/-(\d+)/);
+                // Extraer el ID del producto al final del slug (ej: -56867)
+                const match = productPath.match(/-(\d+)$/);
                 const productId = match ? match[1] : null;
                 
                 // Extraer los IDs de los atributos del hash
