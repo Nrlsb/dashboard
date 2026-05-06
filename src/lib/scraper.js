@@ -7,7 +7,7 @@ const selectors = {
         fraction: null 
     },
     'somosrex.com': { 
-        main: '[data-price-type="defaultPromoPrice"] .price, [data-price-type="defaultPromoPrice"].price', 
+        main: '.product-info-main [data-price-type="defaultPromoPrice"].price, [data-price-type="defaultPromoPrice"] .price, [data-price-type="defaultPromoPrice"]', 
         fraction: null 
     },
     'prestigio.com.ar': { 
@@ -35,9 +35,49 @@ const selectors = {
 export async function getPrice(url) {
     if (!url || !url.startsWith('http')) return null;
     try {
-        const domain = new URL(url).hostname.replace('www.', '');
+        const urlObj = new URL(url);
+        const domain = urlObj.hostname.replace('www.', '');
         const config = selectors[domain];
         if (!config) return null;
+
+        // Soporte especial para Pintecord (Odoo) y variantes
+        if (domain === 'pintecord.com.ar' && url.includes('#attr=')) {
+            try {
+                const productPath = urlObj.pathname;
+                // Intentar extraer el ID del producto del slug (ej: -56867)
+                const match = productPath.match(/-(\d+)/);
+                const productId = match ? match[1] : null;
+                
+                // Extraer los IDs de los atributos del hash
+                const hash = url.split('#')[1] || '';
+                const attrPart = hash.split('attr=')[1];
+                const attrIds = attrPart ? attrPart.split(',').map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
+
+                if (productId && attrIds.length > 0) {
+                    // Endpoint exacto capturado de la red
+                    const { data: odooData } = await axios.post(`https://${domain}/website_sale/get_combination_info`, {
+                        jsonrpc: "2.0",
+                        method: "call",
+                        params: {
+                            product_template_id: parseInt(productId),
+                            product_id: false, // Odoo acepta false aquí para buscar por combinación
+                            combination: attrIds,
+                            add_qty: 1,
+                            parent_combination: []
+                        }
+                    }, { 
+                        headers: { 'Content-Type': 'application/json' },
+                        timeout: 10000 
+                    });
+
+                    if (odooData?.result?.price) {
+                        return odooData.result.price;
+                    }
+                }
+            } catch (e) {
+                console.error("Error fetching Odoo variant price:", e.message);
+            }
+        }
 
         const { data } = await axios.get(url, {
             headers: { 
@@ -54,11 +94,12 @@ export async function getPrice(url) {
         // Intentar con el selector configurado
         const el = $(config.main).first();
         
-        // Si el selector es un meta tag, obtener el atributo 'content'
+        // Priorizar atributos de datos que suelen tener el precio "limpio" o meta tags
         if (config.main.includes('meta')) {
             mainPrice = el.attr('content') || '';
         } else {
-            mainPrice = el.text().trim();
+            // Intentamos obtener el valor numérico directo si el sitio lo provee (común en Magento/Rex)
+            mainPrice = el.attr('data-price-amount') || el.attr('content') || el.text().trim();
         }
 
         // Si falla el selector específico, intentar con meta tags estándar de SEO (muy comunes en VTEX)
@@ -71,22 +112,27 @@ export async function getPrice(url) {
         if (!mainPrice) return null;
 
         // Limpieza profunda del precio
-        // Si viene de meta tag suele ser "172873.00", si viene de HTML "$ 172.873,00"
         let cleaned = mainPrice.replace(/\s/g, ''); // Quitar espacios
         
         // Manejar formato latino (1.234,56) vs internacional (1,234.56)
         if (cleaned.includes(',') && cleaned.includes('.')) {
             if (cleaned.indexOf('.') < cleaned.indexOf(',')) {
-                // Formato latino: 1.234,56
+                // Formato latino: 1.234,56 -> Quitar puntos (miles) y cambiar coma por punto (decimal)
                 cleaned = cleaned.replace(/\./g, '').replace(',', '.');
             } else {
-                // Formato internacional: 1,234.56
+                // Formato internacional: 1,234.56 -> Quitar comas (miles)
                 cleaned = cleaned.replace(/,/g, '');
             }
         } else if (cleaned.includes(',')) {
-            // Solo coma: podría ser decimal o separador de miles. 
-            // En Argentina suele ser decimal.
+            // Solo coma: en Argentina es decimal (ej: 1234,56)
             cleaned = cleaned.replace(',', '.');
+        } else if (cleaned.includes('.')) {
+            // Solo punto: Caso crítico (ej: Rex "$172.873")
+            const parts = cleaned.split('.');
+            const lastPart = parts[parts.length - 1].replace(/[^\d]/g, '');
+            if (lastPart.length === 3) {
+                cleaned = cleaned.replace(/\./g, '');
+            }
         }
 
         const price = parseFloat(cleaned.replace(/[^\d.]/g, ''));

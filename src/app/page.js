@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { RefreshCw, TrendingDown, Store, ExternalLink, Package } from 'lucide-react';
+import { RefreshCw, TrendingDown, Store, ExternalLink, Package, Edit, Trash2 } from 'lucide-react';
 
 export default function PriceDashboard() {
   const [products, setProducts] = useState([]);
@@ -21,6 +21,7 @@ export default function PriceDashboard() {
       'pintureriasmercurio.com.ar': ''
     }
   });
+  const [editingId, setEditingId] = useState(null);
 
   const fetchPrices = async () => {
     setUpdating(true);
@@ -38,38 +39,76 @@ export default function PriceDashboard() {
     }
   };
 
-  const handleAddProduct = async (e) => {
+  const handleSaveProduct = async (e) => {
     e.preventDefault();
     setUpdating(true);
     try {
-      const res = await fetch('/api/products', {
-        method: 'POST',
+      const url = '/api/products';
+      const method = editingId ? 'PUT' : 'POST';
+      const body = editingId ? { ...newProduct, id: editingId } : newProduct;
+
+      const res = await fetch(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newProduct)
+        body: JSON.stringify(body)
       });
+
       if (res.ok) {
-        setShowModal(false);
-        setNewProduct({ 
-          name: '', 
-          sku: '', 
-          links: {
-            'tiendauniverso.com.ar': '',
-            'somosrex.com': '',
-            'prestigio.com.ar': '',
-            'pisano.com.ar': '',
-            'pintureriasambito.com': '',
-            'pintecord.com.ar': '',
-            'pintureriagarin.com': '',
-            'pintureriasmercurio.com.ar': ''
-          } 
-        });
-        fetchPrices(); // Recargar para ver el nuevo producto
+        handleCloseModal();
+        fetchPrices();
       }
     } catch (error) {
-      console.error('Error adding product:', error);
+      console.error('Error saving product:', error);
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleDeleteProduct = async (id) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) return;
+    
+    setUpdating(true);
+    try {
+      const res = await fetch(`/api/products?id=${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        fetchPrices();
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleEditClick = (product) => {
+    setNewProduct({
+      name: product.name,
+      sku: product.sku,
+      links: product.links
+    });
+    setEditingId(product.id);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingId(null);
+    setNewProduct({ 
+      name: '', 
+      sku: '', 
+      links: {
+        'tiendauniverso.com.ar': '',
+        'somosrex.com': '',
+        'prestigio.com.ar': '',
+        'pisano.com.ar': '',
+        'pintureriasambito.com': '',
+        'pintecord.com.ar': '',
+        'pintureriagarin.com': '',
+        'pintureriasmercurio.com.ar': ''
+      } 
+    });
   };
 
   useEffect(() => {
@@ -110,7 +149,10 @@ export default function PriceDashboard() {
           <button 
             className="btn-primary" 
             style={{ background: 'var(--accent)' }}
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              setEditingId(null);
+              setShowModal(true);
+            }}
           >
             <Package size={20} />
             Añadir Producto
@@ -127,18 +169,18 @@ export default function PriceDashboard() {
       </header>
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={handleCloseModal}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-              <h2 style={{ margin: 0 }}>Añadir Nuevo Producto</h2>
+              <h2 style={{ margin: 0 }}>{editingId ? 'Editar Producto' : 'Añadir Nuevo Producto'}</h2>
               <button 
-                onClick={() => setShowModal(false)}
+                onClick={handleCloseModal}
                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
               >
                 ✕
               </button>
             </div>
-            <form onSubmit={handleAddProduct}>
+            <form onSubmit={handleSaveProduct}>
               <div className="form-group">
                 <label>Nombre del Producto</label>
                 <input 
@@ -180,80 +222,103 @@ export default function PriceDashboard() {
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                <button type="submit" className="btn-primary" style={{ flex: 1 }}>Guardar y Scrapear</button>
-                <button type="button" className="btn-primary" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }} onClick={() => setShowModal(false)}>Cancelar</button>
+                <button type="submit" className="btn-primary" style={{ flex: 1 }}>
+                  {editingId ? 'Guardar Cambios' : 'Guardar y Scrapear'}
+                </button>
+                <button type="button" className="btn-primary" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }} onClick={handleCloseModal}>Cancelar</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      <section className="glass-card">
-        <table className="price-table">
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Universo</th>
-              <th>Rex</th>
-              <th>Prestigio</th>
-              <th>Pisano</th>
-              <th>Ámbito</th>
-              <th>Pintecord</th>
-              <th>Garin</th>
-              <th>Mercurio</th>
-              <th>Mejor Precio</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map(product => {
-              const bestPrice = getBestPrice(product.prices);
-              return (
-                <tr key={product.id}>
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontWeight: 600, fontSize: '1rem' }}>{product.name}</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SKU: {product.sku}</span>
-                    </div>
-                  </td>
-                  {[
-                    'tiendauniverso.com.ar', 
-                    'somosrex.com', 
-                    'prestigio.com.ar', 
-                    'pisano.com.ar', 
-                    'pintureriasambito.com',
-                    'pintecord.com.ar',
-                    'pintureriagarin.com',
-                    'pintureriasmercurio.com.ar'
-                  ].map(store => {
-                    const price = product.prices[store];
-                    const isBest = price === bestPrice && price !== null;
-                    return (
-                      <td key={store}>
-                        {price ? (
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ color: isBest ? 'var(--success)' : 'white', fontWeight: isBest ? 700 : 400 }}>
-                              {formatCurrency(price)}
-                            </span>
-                            {isBest && <span className="badge badge-success" style={{ width: 'fit-content', marginTop: '0.25rem' }}>Más barato</span>}
-                          </div>
-                        ) : (
-                          <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>No disponible</span>
-                        )}
-                      </td>
-                    );
-                  })}
-                  <td>
-                    {bestPrice ? (
-                      <div className="glass-card" style={{ padding: '0.5rem 1rem', border: '1px solid var(--success)', display: 'inline-block' }}>
-                        <span style={{ color: 'var(--success)', fontWeight: 700 }}>{formatCurrency(bestPrice)}</span>
+      <section className="glass-card" style={{ padding: '1rem' }}>
+        <div className="table-container">
+          <table className="price-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Universo</th>
+                <th>Rex</th>
+                <th>Prestigio</th>
+                <th>Pisano</th>
+                <th>Ámbito</th>
+                <th>Pintecord</th>
+                <th>Garin</th>
+                <th>Mercurio</th>
+                <th>Mejor Precio</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map(product => {
+                const bestPrice = getBestPrice(product.prices);
+                return (
+                  <tr key={product.id}>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontWeight: 600, fontSize: '1rem' }}>{product.name}</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SKU: {product.sku}</span>
                       </div>
-                    ) : '-'}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                    {[
+                      'tiendauniverso.com.ar', 
+                      'somosrex.com', 
+                      'prestigio.com.ar', 
+                      'pisano.com.ar', 
+                      'pintureriasambito.com',
+                      'pintecord.com.ar',
+                      'pintureriagarin.com',
+                      'pintureriasmercurio.com.ar'
+                    ].map(store => {
+                      const price = product.prices[store];
+                      const isBest = price === bestPrice && price !== null;
+                      return (
+                        <td key={store}>
+                          {price ? (
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ color: isBest ? 'var(--success)' : 'white', fontWeight: isBest ? 700 : 400 }}>
+                                {formatCurrency(price)}
+                              </span>
+                              {isBest && <span className="badge badge-success" style={{ width: 'fit-content', marginTop: '0.25rem' }}>Más barato</span>}
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>No disponible</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td>
+                      {bestPrice ? (
+                        <div className="glass-card" style={{ padding: '0.5rem 1rem', border: '1px solid var(--success)', display: 'inline-block' }}>
+                          <span style={{ color: 'var(--success)', fontWeight: 700 }}>{formatCurrency(bestPrice)}</span>
+                        </div>
+                      ) : '-'}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button 
+                          onClick={() => handleEditClick(product)}
+                          style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', padding: '0.5rem' }}
+                          title="Editar"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteProduct(product.id)}
+                          style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '0.5rem' }}
+                          title="Eliminar"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <style jsx>{`

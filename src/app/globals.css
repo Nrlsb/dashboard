@@ -41,7 +41,7 @@ h1, h2, h3, h4 {
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1400px; /* Un poco más ancho para la tabla */
   margin: 0 auto;
   padding: 2rem;
 }
@@ -71,43 +71,77 @@ h1, h2, h3, h4 {
 }
 
 /* Table Design */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--card-border) transparent;
+  padding-bottom: 1rem;
+}
+
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 10px;
+}
+
 .price-table {
   width: 100%;
+  min-width: 1400px; /* Asegura espacio para todas las columnas */
   border-collapse: separate;
-  border-spacing: 0 0.75rem;
+  border-spacing: 0 0.5rem;
 }
 
 .price-table th {
-  padding: 1rem;
+  padding: 1rem 1.25rem;
   text-align: left;
   color: var(--text-muted);
-  font-weight: 500;
-  font-size: 0.875rem;
+  font-weight: 600;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .price-table tr {
   background: var(--card-bg);
-  transition: background 0.2s;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.price-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .price-table td {
-  padding: 1.25rem 1rem;
+  padding: 1rem 1.25rem;
   border-top: 1px solid var(--card-border);
   border-bottom: 1px solid var(--card-border);
+  vertical-align: middle;
 }
 
 .price-table td:first-child {
   border-left: 1px solid var(--card-border);
   border-top-left-radius: 1rem;
   border-bottom-left-radius: 1rem;
+  min-width: 250px; /* Columna de producto más ancha */
 }
 
 .price-table td:last-child {
   border-right: 1px solid var(--card-border);
   border-top-right-radius: 1rem;
   border-bottom-right-radius: 1rem;
+  min-width: 100px;
+}
+
+.price-table td:not(:first-child) {
+  white-space: nowrap; /* Evita que los precios se rompan en dos líneas */
 }
 
 /* Buttons */
