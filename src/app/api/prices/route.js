@@ -13,12 +13,18 @@ export async function GET() {
         if (fetchError) throw fetchError;
 
         const updatedProducts = await Promise.all(products.map(async (product) => {
-            const newPrices = {};
+            // Mantener precios anteriores para no borrarlos si el scraper falla o no está disponible el link
+            const newPrices = { ...(product.prices || {}) };
+            
             for (const [domain, url] of Object.entries(product.links)) {
                 if (!url) continue;
-                const price = await getPrice(url);
-                if (price) {
-                    newPrices[domain] = price;
+                try {
+                    const price = await getPrice(url);
+                    if (price !== null && price !== undefined) {
+                        newPrices[domain] = price;
+                    }
+                } catch (e) {
+                    console.error(`Error scrapeando ${domain}:`, e.message);
                 }
             }
             

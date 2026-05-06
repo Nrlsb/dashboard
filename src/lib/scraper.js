@@ -77,7 +77,27 @@ export async function getPrice(url) {
                     });
 
                     if (odooData?.result?.price) {
-                        return odooData.result.price;
+                        // Limpiar el precio por si viene como string formateado (ej: "$ 164.140,65")
+                        const rawPrice = odooData.result.price.toString().replace(/[^\d.,]/g, '');
+                        let cleaned = rawPrice;
+                        
+                        if (cleaned.includes(',') && cleaned.includes('.')) {
+                            if (cleaned.indexOf('.') < cleaned.indexOf(',')) {
+                                cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+                            } else {
+                                cleaned = cleaned.replace(/,/g, '');
+                            }
+                        } else if (cleaned.includes(',')) {
+                            cleaned = cleaned.replace(',', '.');
+                        } else if (cleaned.includes('.')) {
+                            const parts = cleaned.split('.');
+                            if (parts[parts.length - 1].length === 3) {
+                                cleaned = cleaned.replace(/\./g, '');
+                            }
+                        }
+
+                        const price = parseFloat(cleaned);
+                        return isNaN(price) ? null : price;
                     }
                 }
             } catch (e) {
